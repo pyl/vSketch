@@ -4,30 +4,32 @@ class Paint(object):
 
     DEFAULT_PEN_SIZE = 5.0
     DEFAULT_COLOR = 'black'
-    SCREEN_W=800
-    SCREEN_H=800
+    SCREEN_W=1600
+    SCREEN_H=1600
 
 
     def __init__(self):    
         self.master = Tk()    
 
         self.line_button = Button(self.master, text='Line',command=self.set_tool_line)
-        self.line_button.grid(row=0,column=0)
+        self.line_button.grid(row=1,column=0)
 
         self.circle_button = Button(self.master, text='Circle',command= self.set_tool_circle)
-        self.circle_button.grid(row=0,column=1)
+        self.circle_button.grid(row=2,column=0)
 
         self.point_button = Button(self.master, text='Point',command = self.set_tool_point)
-        self.point_button.grid(row=0,column=2)
+        self.point_button.grid(row=3,column=0)
 
         self.point_button = Button(self.master, text='Freehand',command = self.set_tool_freehand)
-        self.point_button.grid(row=0,column=3)
+        self.point_button.grid(row=4,column=0)
 
         self.point_button = Button(self.master, text ='Text', command = self.set_tool_text)
-        self.point_button.grid(row=0,column=4)
+        self.point_button.grid(row=5,column=0)
 
-        self.draw_zone = Canvas(self.master,height=600,width=600,bg='white')
-        self.draw_zone.grid(row=1,columnspan=5)
+        self.draw_zone = Canvas(self.master,height=10000,width=10000,bg='white')
+        
+        self.draw_zone.grid(row=5,columnspan=5)
+        
 
         self.menubar = Menu(self.master)
         self.menu1 = Menu(self.menubar, tearoff=0)
@@ -86,7 +88,7 @@ class Paint(object):
         self.line_start_x=event.x
         self.line_start_y=event.y
     def line_motion(self,event):
-        # self.draw_zone.delete('temp_line_objects')
+        self.draw_zone.delete('temp_line_objects')
         self.draw_zone.create_line(self.line_start_x,self.line_start_y,event.x,event.y,fill=self.DEFAULT_COLOR,smooth=1,tags='temp_line_objects')
     def line_end(self,event):
         self.draw_zone.delete('temp_line_objects')
@@ -142,15 +144,8 @@ class Paint(object):
         print(self.d)
         self.d.config(text="hello")
         # self.draw_zone.delete(self.d)
+
         
-
-
-
-
-
-
-
-
         
     
 
