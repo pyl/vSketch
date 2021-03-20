@@ -8,28 +8,28 @@ class Paint(object):
     SCREEN_H=1600
 
 
-    def __init__(self):    
-        self.master = Tk()    
+    def __init__(self):
+        self.master = Tk()
 
-        self.line_button = Button(self.master, text='Line',command=self.set_tool_line)
-        self.line_button.grid(row=1,column=0)
+        #self.line_button = Button(self.master, text='Line',command=self.set_tool_line)
+        # self.line_button.grid(row=1,column=0)
 
-        self.circle_button = Button(self.master, text='Circle',command= self.set_tool_circle)
-        self.circle_button.grid(row=2,column=0)
+        # self.circle_button = Button(self.master, text='Circle',command= self.set_tool_circle)
+        # self.circle_button.grid(row=2,column=0)
 
-        self.point_button = Button(self.master, text='Point',command = self.set_tool_point)
-        self.point_button.grid(row=3,column=0)
+        # self.point_button = Button(self.master, text='Point',command = self.set_tool_point)
+        # self.point_button.grid(row=3,column=0)
 
-        self.point_button = Button(self.master, text='Freehand',command = self.set_tool_freehand)
-        self.point_button.grid(row=4,column=0)
+        # self.point_button = Button(self.master, text='Freehand',command = self.set_tool_freehand)
+        # self.point_button.grid(row=4,column=0)
 
-        self.point_button = Button(self.master, text ='Text', command = self.set_tool_text)
-        self.point_button.grid(row=5,column=0)
+        # self.point_button = Button(self.master, text ='Text', command = self.set_tool_text)
+        # self.point_button.grid(row=5,column=0)
 
         self.draw_zone = Canvas(self.master,height=10000,width=10000,bg='white')
-        
-        self.draw_zone.grid(row=5,columnspan=5)
-        
+
+        self.draw_zone.grid(row=0,column=0)
+
 
         self.menubar = Menu(self.master)
         self.menu1 = Menu(self.menubar, tearoff=0)
@@ -44,11 +44,15 @@ class Paint(object):
         self.menu2.add_command(label="Redo", command=self.alert)
         self.menubar.add_cascade(label="Editer", menu=self.menu2)
 
+        #scrollbar
+        self.scrollbar = Scrollbar(self.master)
+        self.scrollbar.grid(row = 1, column = 0, sticky = "ew")
+
         self.master.config(menu=self.menubar)
         self.master.title('UI')
 
         self.setup()
-        self.master.mainloop()    
+        self.master.mainloop()
 
     def setup(self):
         self.line_start_x = None
@@ -64,24 +68,27 @@ class Paint(object):
 
         self.Line_objects = []
         self.Point_objects = []
-        self.stack = []    
+        self.stack = []
         self.px = 0
         self.py = 0
         self.draw_zone.focus_set()
         self.recentText = None
-
-
         self.draw_zone.bind('<Button-1>', self.draw_start)
         self.draw_zone.bind('<B1-Motion>',self.draw_motion)
         self.draw_zone.bind('<ButtonRelease-1>',self.draw_end)
         self.draw_zone.bind("<Key>", self.change_text)
 
         self.mode = ''
-        
-    
+
+
+        #Text stuff
+        self.topText = ''
+        self.topSize = 0
+        self.topX = 0
+        self.topY = 0
+
     def keyFun(self, event):
-        print("h")
-        print(event)
+        pass
 
 
     def line_start(self,event):
@@ -89,10 +96,10 @@ class Paint(object):
         self.line_start_y=event.y
     def line_motion(self,event):
         self.draw_zone.delete('temp_line_objects')
-        self.draw_zone.create_line(self.line_start_x,self.line_start_y,event.x,event.y,fill=self.DEFAULT_COLOR,smooth=1,tags='temp_line_objects')
+        self.draw_zone.create_line(self.line_start_x,self.line_start_y,event.x,event.y,fill=self.DEFAULT_COLOR,smooth=1,tags='temp_line_objects', width = 10)
     def line_end(self,event):
         self.draw_zone.delete('temp_line_objects')
-        x=self.draw_zone.create_line(self.line_start_x,self.line_start_y,event.x,event.y,fill=self.DEFAULT_COLOR,smooth=1)
+        x=self.draw_zone.create_line(self.line_start_x,self.line_start_y,event.x,event.y,fill=self.DEFAULT_COLOR,smooth=1, width = 10)
         self.Line_objects.append(x)
         self.stack.append(x)
 
@@ -105,7 +112,7 @@ class Paint(object):
         #self.draw_zone.create_oval(event.x,event.y,(2*self.circle_start_x-event.x),(2*self.circle_start_y-event.y),tags='temp_circle_objects')
         self.draw_zone.create_oval((self.circle_start_x),(self.circle_start_y),event.x,event.y,fill=self.DEFAULT_COLOR,tags='temp_circle_objects')
     def circle_end(self,event):
-        self.draw_zone.delete('temp_circle_objects') 
+        self.draw_zone.delete('temp_circle_objects')
         #x=self.draw_zone.create_oval(event.x,event.y,(2*self.circle_start_x-event.x),(2*self.circle_start_y-event.y))
         x=self.draw_zone.create_oval((self.circle_start_x),(self.circle_start_y),event.x,event.y,fill=self.DEFAULT_COLOR)
         self.stack.append(x)
@@ -138,30 +145,46 @@ class Paint(object):
         self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "hello", font = ("Purisa", math.floor(0.8*(event.y-self.text_start_y))), tags = 'temp_text_objects', anchor = NW)
     def text_end(self, event):
         self.draw_zone.delete('temp_text_objects')
-        self.d = self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "hello", font = ("Purisa", math.floor(0.8*(event.y-self.text_start_y))), anchor = NW)
-        self.mode = 'edit'
+        d = self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "hello", font = ("Purisa", math.floor(0.8*(event.y-self.text_start_y))), anchor = NW)
+        self.stack.append(d)
+        self.topX = self.text_start_x
+        self.topY = self.text_start_y
+        self.topSize = math.floor(0.8*(event.y-self.text_start_y))
+        self.topText = "hello"
+
+        self.mode = 'textedit'
     def change_text(self, event):
-        print(self.d)
-        self.d.config(text="hello")
+        if self.mode == 'textedit':
+            old = self.stack.pop()
+            self.draw_zone.delete(old)
+            #if delete
+            if event.char != '\x08':
+                d = self.draw_zone.create_text(self.topX, self.topY, text = self.topText + event.char, font = ("Purisa", self.topSize), anchor = NW)
+                self.topText = self.topText + event.char
+                self.stack.append(d)
+            else:
+                d = self.draw_zone.create_text(self.topX, self.topY, text = self.topText[:-1], font = ("Purisa", self.topSize), anchor = NW)
+                self.topText = self.topText[:-1]
+                self.stack.append(d)
         # self.draw_zone.delete(self.d)
 
-        
-        
-    
-
     def set_tool_line(self):
+        self.mode = ''
         self.tool_option = 'line'
     def set_tool_circle(self):
+        self.mode = ''
         self.tool_option = 'circle'
     def set_tool_point(self):
+        self.mode = ''
         self.tool_option = 'point'
     def set_tool_freehand(self):
+        self.mode = ''
         self.tool_option = 'freehand'
     def set_tool_text(self):
+        self.mode = ''
         self.tool_option = 'text'
 
     def draw_start(self,event):
-        print("hello")
         if self.tool_option=='line':
             self.line_start(event)
         elif self.tool_option == 'circle':
@@ -193,14 +216,14 @@ class Paint(object):
             self.text_end(event)
 
     def undo(self):
-        
+        self.mode = ''
         x = self.stack.pop()
         if x == "end":
             while x != "start":
                 x = self.stack.pop()
                 self.draw_zone.delete(x)
         else:
-            self.draw_zone.delete(x)        
+            self.draw_zone.delete(x)
 
     def alert(self):
         print('yo')
