@@ -289,7 +289,6 @@ class Paint(object):
             for x in self.stack:
                 if self.draw_zone.type(x) == "text":
                     size = self.initialSizes[x] * self.regZoom
-                    print(size)
                     newsize = round((size*1.1))
                     #newX = self.draw_zone.itemconfigure(x, )
                     self.draw_zone.itemconfigure(x, font = ("Purisa", newsize))
@@ -305,7 +304,6 @@ class Paint(object):
                 if self.draw_zone.type(x) == "text":
 
                     size = self.initialSizes[x] * self.regZoom
-                    print(size)
                     newsize = round((size*0.9))
 
                     self.draw_zone.itemconfigure(x, font = ("Purisa", newsize))
