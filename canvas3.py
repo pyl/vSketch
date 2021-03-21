@@ -3,7 +3,7 @@ import math
 class Paint(object):
 
     DEFAULT_PEN_SIZE = 5.0
-    DEFAULT_COLOR = 'black'
+    DEFAULT_COLOR = 'white'
     SCREEN_W=1600
     SCREEN_H=1600
 
@@ -26,7 +26,7 @@ class Paint(object):
 
         # self.point_button = Button(self.master, text ='Text', command = self.set_tool_text)
         # self.point_button.grid(row=5,column=0)
-        self.draw_zone = Canvas(self.master,height=400,width=400,bg='white')
+        self.draw_zone = Canvas(self.master,height=400,width=400,bg='black')
         self.draw_zone.pack(expand = True, fill = BOTH)
         self.scrollbarX = Scrollbar(self.master, orient = "horizontal")
         self.scrollbarX.pack(fill = BOTH)
@@ -44,7 +44,7 @@ class Paint(object):
         self.menubar.add_cascade(label="Editer", menu=self.menu2)
 
         #scrollbar
-        self.draw_zone.configure(xscrollcommand = self.scrollbarX.set, scrollregion = (0, 0, 10000, 1000))
+        self.draw_zone.configure(xscrollcommand = self.scrollbarX.set, scrollregion = (0, 0, 10000, 50000))
         self.scrollbarX.configure(command = self.draw_zone.xview)
 
         # self.scrollbarX.grid(row = 1, column = 0, sticky = "ew")
@@ -52,7 +52,7 @@ class Paint(object):
 
 
         self.master.config(menu=self.menubar)
-        self.master.title('UI')
+        self.master.title('Normal Mode')
 
         self.setup()
         self.master.mainloop()
@@ -86,46 +86,38 @@ class Paint(object):
         self.mode = ''
 
 
-        self.modeText = self.draw_zone.create_text(5, 5, text = "Normal Mode", anchor = 'nw')
-
-
         #Text stuff
-
     def keyFun(self, event):
         pass
     def setMode(self, mode):
         self.mode = mode
         if mode == '':
-            self.draw_zone.itemconfigure(self.modeText, text='Normal Mode')
+            self.master.title("Normal Mode")
         if mode == 'text':
-            self.draw_zone.itemconfigure(self.modeText, text='Text Mode')
+            self.master.title("Text Mode")
         if mode == 'textedit':
-            self.draw_zone.itemconfigure(self.modeText, text='Text Edit Mode')
+            self.master.title("Text Edit Mode")
         if mode == 'line':
-            self.draw_zone.itemconfigure(self.modeText, text='Line Mode')
+            self.master.title("Line Mode")
         if mode == 'freehand':
-            self.draw_zone.itemconfigure(self.modeText, text='Freehand Mode')
-
-
-
+            self.master.title("Freehand Mode")
 
     def line_start(self,event):
         truex = self.draw_zone.canvasx(event.x)
         truey = self.draw_zone.canvasy(event.y)
-        self.line_start_x=truex
-        self.line_start_y=truey
+        x = self.draw_zone.create_line(truex,truey,truex + 1,truey + 1,fill=self.DEFAULT_COLOR, width = 5*self.regZoom)
+        self.stack.append(x)
+        self.initialSizes[x] = 5
+
     def line_motion(self,event):
         truex = self.draw_zone.canvasx(event.x)
         truey = self.draw_zone.canvasy(event.y)
-        self.draw_zone.delete('temp_line_objects')
-        self.draw_zone.create_line(self.line_start_x,self.line_start_y,truex,truey,fill=self.DEFAULT_COLOR,smooth=1,tags='temp_line_objects', width = 10)
+        x = self.stack[-1]
+        curx = self.draw_zone.coords(x)[0]
+        cury = self.draw_zone.coords(x)[1]
+        self.draw_zone.coords(x, curx, cury, truex, truey)
     def line_end(self,event):
-        truex = self.draw_zone.canvasx(event.x)
-        truey = self.draw_zone.canvasy(event.y)
-        self.draw_zone.delete('temp_line_objects')
-        x=self.draw_zone.create_line(self.line_start_x,self.line_start_y,truex,truey,fill=self.DEFAULT_COLOR,smooth=1, width = 10)
-        self.Line_objects.append(x)
-        self.stack.append(x)
+        pass
 
 
     def circle_start(self,event):
@@ -135,11 +127,9 @@ class Paint(object):
         self.circle_start_y = truey
     def circle_motion(self,event):
         self.draw_zone.delete('temp_circle_objects')   #sym de circle_end par rapport a circle_start
-        #self.draw_zone.create_oval(event.x,event.y,(2*self.circle_start_x-event.x),(2*self.circle_start_y-event.y),tags='temp_circle_objects')
         self.draw_zone.create_oval((self.circle_start_x),(self.circle_start_y),truex,truey,fill=self.DEFAULT_COLOR,tags='temp_circle_objects')
     def circle_end(self,event):
         self.draw_zone.delete('temp_circle_objects')
-        #x=self.draw_zone.create_oval(event.x,event.y,(2*self.circle_start_x-event.x),(2*self.circle_start_y-event.y))
         x=self.draw_zone.create_oval((self.circle_start_x),(self.circle_start_y),truex,truey,fill=self.DEFAULT_COLOR)
         self.stack.append(x)
 
@@ -161,10 +151,11 @@ class Paint(object):
     def freehand_motion(self, event):
         truex = self.draw_zone.canvasx(event.x)
         truey = self.draw_zone.canvasy(event.y)
-        x = self.draw_zone.create_line(self.px, self.py, truex, truey, fill=self.DEFAULT_COLOR,smooth=1)
+        x = self.draw_zone.create_line(self.px, self.py, truex, truey, fill=self.DEFAULT_COLOR, )
         self.px = truex
         self.py = truey
         self.stack.append(x)
+        self.initialSizes[x] = 1
     def freehand_end(self, event):
         self.stack.append("end")
 
@@ -177,15 +168,18 @@ class Paint(object):
     def text_motion(self, event):
         truex = self.draw_zone.canvasx(event.x)
         truey = self.draw_zone.canvasy(event.y)
+
         self.draw_zone.delete('temp_text_objects')
-        self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "hello", font = ("Purisa",
-                                                                                                 math.floor(0.8*(truey-self.text_start_y))), tags = 'temp_text_objects', anchor = NW)
+        self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "\\\\", font = ("Purisa",
+                                                                                                 math.floor(0.8*(truey-self.text_start_y))),
+                                   tags = 'temp_text_objects', anchor = NW, fill = "white")
     def text_end(self, event):
         truex = self.draw_zone.canvasx(event.x)
         truey = self.draw_zone.canvasy(event.y)
         self.draw_zone.delete('temp_text_objects')
         fontsize = math.floor(0.8*(truey-self.text_start_y))
-        d = self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "hello", font = ("Purisa",fontsize), anchor = NW)
+        d = self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "\\\\", font = ("Purisa",fontsize),
+                                       anchor = NW, fill = "white")
         self.stack.append(d)
         self.initialSizes[d] = fontsize
 
@@ -198,6 +192,8 @@ class Paint(object):
         if self.mode == 'textedit':
             top = self.stack[-1]
             oldText = self.draw_zone.itemcget(top, 'text')
+            if oldText == '\\\\':
+                oldText = ''
             if c != '\x08':
                 newText = oldText + c
                 self.draw_zone.itemconfigure(top, text=newText)
@@ -205,15 +201,14 @@ class Paint(object):
                 newText = oldText[:-1]
                 self.draw_zone.itemconfigure(top, text=newText)
         if self.mode == '':
+            if c == 'u':
+                self.undo()
             if c == 'a':
                 self.setMode('text')
             if c == 'o':
                 self.setMode('freehand')
             if c == 'e':
                 self.setMode('line')
-
-
-
 
             # old = self.stack.pop()
             # self.draw_zone.delete(old)
@@ -289,19 +284,18 @@ class Paint(object):
         truey = self.draw_zone.canvasy(event.y)
         #zoom in
         if event.delta > 0:
+
             self.draw_zone.scale("all", truex, truey, 1.1, 1.1)
             self.regZoom *= 1.1
             for x in self.stack:
                 if self.draw_zone.type(x) == "text":
-                    size = int(self.draw_zone.itemcget(x, 'font')[7:])
-                    if size < 2:
-                        size = 2
-                    newsize = math.ceil((size*1.1)+1)
+                    size = self.initialSizes[x] * self.regZoom
+                    newsize = round((size*1.1))
                     #newX = self.draw_zone.itemconfigure(x, )
                     self.draw_zone.itemconfigure(x, font = ("Purisa", newsize))
                 if self.draw_zone.type(x) == "line":
-                    width = int(float(self.draw_zone.itemcget(x, 'width')))
-                    newwidth = math.ceil((width*1.1)+1)
+                    width = self.initialSizes[x] * self.regZoom
+                    newwidth = round((width*1.1))
                     self.draw_zone.itemconfigure(x, width = newwidth)
         #zoom out
         elif (event.delta < 0):
@@ -309,17 +303,14 @@ class Paint(object):
             self.regZoom *= 0.9
             for x in self.stack:
                 if self.draw_zone.type(x) == "text":
-                    size = int(self.draw_zone.itemcget(x, 'font')[7:])
-                    if size < 2:
-                        size = 2
-                    newsize = math.ceil((size*0.9)-1)
+
+                    size = self.initialSizes[x] * self.regZoom
+                    newsize = round((size*0.9))
 
                     self.draw_zone.itemconfigure(x, font = ("Purisa", newsize))
                 if self.draw_zone.type(x) == "line":
-                    width = int(float(self.draw_zone.itemcget(x, 'width')))
-                    newwidth = math.ceil((width*0.9)-1)
-                    if newwidth < 2:
-                        newwidth = 2
+                    width = self.initialSizes[x] * self.regZoom
+                    newwidth = round((width*0.9))
                     self.draw_zone.itemconfigure(x, width = newwidth)
 
 
