@@ -26,7 +26,7 @@ class Paint(object):
 
         # self.point_button = Button(self.master, text ='Text', command = self.set_tool_text)
         # self.point_button.grid(row=5,column=0)
-        self.draw_zone = Canvas(self.master,height=400,width=400,bg='gray11')
+        self.draw_zone = Canvas(self.master,height=400,width=800,bg='gray11')
         self.draw_zone.pack(expand = True, fill = BOTH)
         self.scrollbarX = Scrollbar(self.master, orient = "horizontal")
         self.scrollbarX.pack(fill = BOTH)
@@ -47,8 +47,6 @@ class Paint(object):
         self.draw_zone.configure(xscrollcommand = self.scrollbarX.set, scrollregion = (0, 0, 10000, 50000))
         self.scrollbarX.configure(command = self.draw_zone.xview)
 
-        # self.scrollbarX.grid(row = 1, column = 0, sticky = "ew")
-        # self.draw_zone.grid(row = 0, column = 0, sticky = "nsew")
 
 
         self.master.config(menu=self.menubar)
@@ -170,18 +168,18 @@ class Paint(object):
         truey = self.draw_zone.canvasy(event.y)
 
         self.draw_zone.delete('temp_text_objects')
-        self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "\\\\", font = ("Purisa",
-                                                                                                 math.floor(0.8*(truey-self.text_start_y))),
-                                   tags = 'temp_text_objects', anchor = NW, fill = "white")
+        fontsize = math.floor(0.8*(truey-self.text_start_y))
+        self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "\\\\", font =
+        ("Purisa",round(fontsize)), tags = 'temp_text_objects', anchor = NW, fill = "white")
     def text_end(self, event):
         truex = self.draw_zone.canvasx(event.x)
         truey = self.draw_zone.canvasy(event.y)
         self.draw_zone.delete('temp_text_objects')
         fontsize = math.floor(0.8*(truey-self.text_start_y))
-        d = self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "\\\\", font = ("Purisa",fontsize),
-                                       anchor = NW, fill = "white")
+        d = self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "\\\\", font =
+                                       ("Purisa",round(fontsize)), anchor = NW, fill = "white")
         self.stack.append(d)
-        self.initialSizes[d] = fontsize
+        self.initialSizes[d] = fontsize/self.regZoom
 
         self.setMode('textedit')
     def change_text(self, event):
@@ -291,6 +289,7 @@ class Paint(object):
             for x in self.stack:
                 if self.draw_zone.type(x) == "text":
                     size = self.initialSizes[x] * self.regZoom
+                    print(size)
                     newsize = round((size*1.1))
                     #newX = self.draw_zone.itemconfigure(x, )
                     self.draw_zone.itemconfigure(x, font = ("Purisa", newsize))
@@ -306,6 +305,7 @@ class Paint(object):
                 if self.draw_zone.type(x) == "text":
 
                     size = self.initialSizes[x] * self.regZoom
+                    print(size)
                     newsize = round((size*0.9))
 
                     self.draw_zone.itemconfigure(x, font = ("Purisa", newsize))
@@ -314,11 +314,5 @@ class Paint(object):
                     newwidth = round((width*0.9))
                     self.draw_zone.itemconfigure(x, width = newwidth)
             self.regZoom *= 0.9
-
-
-
-
-
-
 if __name__ == '__main__':
     ge = Paint()
