@@ -26,7 +26,7 @@ class Paint(object):
 
         # self.point_button = Button(self.master, text ='Text', command = self.set_tool_text)
         # self.point_button.grid(row=5,column=0)
-        self.draw_zone = Canvas(self.master,height=400,width=400,bg='black')
+        self.draw_zone = Canvas(self.master,height=400,width=400,bg='gray11')
         self.draw_zone.pack(expand = True, fill = BOTH)
         self.scrollbarX = Scrollbar(self.master, orient = "horizontal")
         self.scrollbarX.pack(fill = BOTH)
@@ -192,13 +192,15 @@ class Paint(object):
         if self.mode == 'textedit':
             top = self.stack[-1]
             oldText = self.draw_zone.itemcget(top, 'text')
-            if oldText == '\\\\':
-                oldText = ''
             if c != '\x08':
+                if oldText == '\\\\' or oldText == '\\':
+                    oldText = ''
                 newText = oldText + c
                 self.draw_zone.itemconfigure(top, text=newText)
             if c == '\x08':
                 newText = oldText[:-1]
+                if newText == '':
+                    newText = '\\\\'
                 self.draw_zone.itemconfigure(top, text=newText)
         if self.mode == '':
             if c == 'u':
@@ -286,7 +288,6 @@ class Paint(object):
         if event.delta > 0:
 
             self.draw_zone.scale("all", truex, truey, 1.1, 1.1)
-            self.regZoom *= 1.1
             for x in self.stack:
                 if self.draw_zone.type(x) == "text":
                     size = self.initialSizes[x] * self.regZoom
@@ -297,10 +298,10 @@ class Paint(object):
                     width = self.initialSizes[x] * self.regZoom
                     newwidth = round((width*1.1))
                     self.draw_zone.itemconfigure(x, width = newwidth)
+            self.regZoom *= 1.1
         #zoom out
         elif (event.delta < 0):
             self.draw_zone.scale("all", truex, truey, 0.9, 0.9)
-            self.regZoom *= 0.9
             for x in self.stack:
                 if self.draw_zone.type(x) == "text":
 
@@ -312,6 +313,7 @@ class Paint(object):
                     width = self.initialSizes[x] * self.regZoom
                     newwidth = round((width*0.9))
                     self.draw_zone.itemconfigure(x, width = newwidth)
+            self.regZoom *= 0.9
 
 
 
