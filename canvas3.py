@@ -302,7 +302,7 @@ class Paint(object):
             self.draw_zone.scale("all", truex, truey, 0.9, 0.9)
             for x in self.stack:
                 if self.draw_zone.type(x) == "text":
-
+                
                     size = self.initialSizes[x] * self.regZoom
                     newsize = round((size*0.9))
 
