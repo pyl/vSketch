@@ -4,12 +4,19 @@ A drawing program with Vim-like commands. Designed for fast sketching for algori
 keybinds:
 
 a - text mode,
+
 o - freehand mode,
+
 e - line mode,
+
 ' - grid mode,
+
 u - undo,
+
 ; - delete mode,
+
 esc - normal mode,
+
 scroll - zoom in or out
 
 To use grid mode, type i'j to plan a grid with i rows and j columns. 
