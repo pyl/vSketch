@@ -67,6 +67,15 @@ class Paint(object):
         self.text_start_x = None
         self.text_start_y = None
 
+        self.rectX = None
+        self.rectY = None
+
+        self.gridXnum = None
+        self.gridYnum = None
+        self.gridX = None
+        self.gridY = None
+        self.gridString = ""
+        self.gridArray = []
 
         self.Line_objects = []
         self.Point_objects = []
@@ -82,7 +91,6 @@ class Paint(object):
         self.draw_zone.bind('<ButtonRelease-1>',self.draw_end)
         self.draw_zone.bind("<Key>", self.change_text)
         self.draw_zone.bind("<MouseWheel>", self.zoomer)
-
         self.mode = ''
 
 
@@ -103,6 +111,12 @@ class Paint(object):
             self.master.title("Freehand Mode")
         if mode == 'delete':
             self.master.title("Delete Mode")
+        if mode == 'rect':
+            self.master.title("Rectangle Mode")
+        if mode == 'grid':
+            self.master.title("Grid Mode")
+        if mode == 'color':
+            pass
 
     def line_start(self,event):
         truex = self.draw_zone.canvasx(event.x)
@@ -162,6 +176,96 @@ class Paint(object):
     def freehand_end(self, event):
         self.stack.append("end")
 
+    def rect_start(self, event):
+        truex = self.draw_zone.canvasx(event.x)
+        truey = self.draw_zone.canvasy(event.y)
+        self.rectX = truex
+        self.rectY = truey
+        width = 5*self.regZoom
+        if width < 1:
+            width = 1
+        x = self.draw_zone.create_rectangle(truex,truey,truex + 1,truey + 1, width =
+                                       round(width), fill = '', outline = 'white')
+        self.stack.append(x)
+        self.initialSizes[x] = 5
+
+    def updaterect(self,x, truex, truey, rectX, rectY):
+        if truex > rectX and truey > rectY:
+            self.draw_zone.coords(x, rectX, rectY, truex, truey)
+        if truex > rectX and truey < rectY:
+            self.draw_zone.coords(x, rectX, truey, truex, rectY)
+        if truex < rectX and truey > rectY:
+            self.draw_zone.coords(x, truex, rectY, rectX, truey)
+        if truex < rectX and truey < rectY:
+            self.draw_zone.coords(x, truex, truey, rectX, rectY)
+
+
+    def rect_motion(self, event):
+        truex = self.draw_zone.canvasx(event.x)
+        truey = self.draw_zone.canvasy(event.y)
+        x = self.stack[-1]
+        self.updaterect(x, truex, truey, self.rectX, self.rectY)
+
+    def grid_start(self, event):
+        truex = self.draw_zone.canvasx(event.x)
+        truey = self.draw_zone.canvasy(event.y)
+        self.gridX = truex
+        self.gridY = truey
+        counter = 0
+        num1 = 0
+        ynum = ""
+        xnum = ""
+        if self.gridString == '':
+            self.gridXnum = 1
+            self.gridYnum = 1
+        if self.gridString != '':
+            while self.gridString[counter] != '\'':
+                c = self.gridString[counter]
+                ynum += c
+                counter += 1
+            counter += 1
+            while counter != len(self.gridString):
+                c = self.gridString[counter]
+                xnum += c
+                counter += 1
+            self.gridXnum = int(xnum)
+            self.gridYnum = int(ynum)
+        self.stack.append('start')
+        for y in range(self.gridYnum):
+            arr = []
+            for x in range(self.gridXnum):
+                width = 5*self.regZoom
+                if width < 1:
+                    width = 1
+                x = self.draw_zone.create_rectangle(truex,truey,truex + 1,truey + 1, width =
+                                                   round(width), fill = '', outline = 'white')
+                arr.append(x)
+                self.stack.append(x)
+                self.initialSizes[x] = 5
+            self.gridArray.append(arr)
+        self.stack.append('end')
+
+    def grid_motion(self, event):
+        truex = self.draw_zone.canvasx(event.x)
+        truey = self.draw_zone.canvasy(event.y)
+        xcount = 0
+        ycount = 0
+        for j,y in enumerate(self.gridArray):
+            for i,x in enumerate(y):
+                xinterval = (self.gridX - truex) / self.gridXnum
+                yinterval = (self.gridY - truey) / self.gridYnum
+                coords = self.draw_zone.coords(x)
+                x1 = coords[0]
+                x2 = coords[2]
+                y1 = coords[1]
+                y2 = coords[3]
+                self.updaterect(x, self.gridX - xinterval * i, self.gridY - yinterval * j,
+                                truex - xinterval * (i - self.gridXnum + 1), truey - yinterval * (j - self.gridYnum + 1))
+
+    def grid_end(self, event):
+        self.gridArray = []
+
+
 
     def text_start(self, event):
         truex = self.draw_zone.canvasx(event.x)
@@ -190,7 +294,6 @@ class Paint(object):
             d = self.draw_zone.create_text(self.text_start_x, truey, text = "\\\\", font = ("Purisa",round(fontsize)), tags = 'temp_text_objects', anchor = NW, fill = "white")
         self.stack.append(d)
         self.initialSizes[d] = fontsize/self.regZoom
-
         self.setMode('textedit')
 
 
@@ -230,14 +333,14 @@ class Paint(object):
                         self.stack.remove(x)
                         self.draw_zone.delete(x)
 
-
-
     def change_text(self, event):
-
         if event.keycode == 19:
             return
         c = event.char
         if c == '\x1b':
+            if self.mode == 'grid':
+                self.gridString = ""
+
             if len(self.stack) > 0:
                 top = self.stack[-1]
                 if self.mode == 'textedit':
@@ -250,11 +353,13 @@ class Paint(object):
         if self.mode == 'textedit':
             top = self.stack[-1]
             oldText = self.draw_zone.itemcget(top, 'text')
+            #any character except backspace and tab
             if c != '\x08' and event.keycode != 16:
                 if oldText == '\\\\' or oldText == '\\':
                     oldText = ''
                 newText = oldText + c
                 self.draw_zone.itemconfigure(top, text=newText)
+            # ctrl
             if c == '\x7f':
                 newText = oldText
                 while True:
@@ -269,6 +374,7 @@ class Paint(object):
                         break
                     newText = newText[:-1]
                 self.draw_zone.itemconfigure(top, text=newText)
+            #backspace
             if c == '\x08':
                 newText = oldText[:-1]
                 if newText == '':
@@ -285,28 +391,37 @@ class Paint(object):
                 self.setMode('line')
             if c == ';':
                 self.setMode('delete')
+            if c == '\'':
+                self.setMode('grid')
+                return
+        if self.mode == 'grid':
+            if c == 'u':
+                self.undo()
         if self.mode == 'line':
             if c == 'u':
                 self.undo()
         if self.mode == 'freehand':
             if c == 'u':
                 self.undo()
-
-
-
-
-            # old = self.stack.pop()
-            # self.draw_zone.delete(old)
-            # #if delete
-            # if event.char != '\x08':
-                # d = self.draw_zone.create_text(self.topX, self.topY, text = self.topText + event.char, font = ("Purisa", self.topSize), anchor = NW)
-                # self.topText = self.topText + event.char
-                # self.stack.append(d)
-            # else:
-                # d = self.draw_zone.create_text(self.topX, self.topY, text = self.topText[:-1], font = ("Purisa", self.topSize), anchor = NW)
-                # self.topText = self.topText[:-1]
-                # self.stack.append(d)
-        # self.draw_zone.delete(self.d)
+        if self.mode == 'rect':
+            if c == 'u':
+                self.undo()
+        if self.mode == 'grid':
+            if c == '\x08':
+                if len(self.gridString) > 0:
+                    self.gridString = self.gridString[:-1]
+                    self.master.title('Grid Mode : ' + self.gridString)
+            if c.isdigit():
+                self.gridString += c
+                self.master.title('Grid Mode : ' + self.gridString)
+            if c == '\'':
+                if '\'' in self.gridString:
+                    return
+                self.gridString += c
+                self.master.title('Grid Mode : ' + self.gridString)
+            # if c != 'a' and not c.isdigit() and c != 'i' and event.keycode != 16:
+                # self.master.title('Grid Mode')
+                # self.gridString = ''
 
     def set_tool_line(self):
         self.mode = ''
@@ -328,8 +443,12 @@ class Paint(object):
             self.point_start(event)
         elif self.mode == "freehand":
             self.freehand_start(event)
-        elif self.mode == 'text':
+        elif self.mode == 'text' or self.mode == 'textedit':
             self.text_start(event)
+        elif self.mode == 'rect':
+            self.rect_start(event)
+        elif self.mode == 'grid':
+            self.grid_start(event)
 
     def draw_motion(self,event):
         if self.mode =='line':
@@ -338,11 +457,14 @@ class Paint(object):
             self.freehand_motion(event)
         elif self.mode == 'circle':
             self.circle_motion(event)
-        elif self.mode == 'text':
+        elif self.mode == 'text' or self.mode == 'textedit':
             self.text_motion(event)
         elif self.mode == 'delete':
-            
             self.delete_motion(event)
+        elif self.mode == 'rect':
+            self.rect_motion(event)
+        elif self.mode == 'grid':
+            self.grid_motion(event)
 
 
     def draw_end(self,event):
@@ -352,8 +474,10 @@ class Paint(object):
             self.freehand_end(event)
         elif self.mode == 'circle':
             self.circle_end(event)
-        elif self.mode == 'text':
+        elif self.mode == 'text' or self.mode == 'textedit':
             self.text_end(event)
+        elif self.mode == 'grid':
+            self.grid_end(event)
 
     def undo(self):
         x = self.stack.pop()
@@ -374,6 +498,13 @@ class Paint(object):
         if event.delta > 0:
             self.draw_zone.scale("all", truex, truey, 1.1, 1.1)
             for x in self.stack:
+                if self.draw_zone.type(x) == "rectangle":
+                    size = self.initialSizes[x] * self.regZoom
+                    newwidth = round((size*1.1))
+                    if newwidth < 1:
+                        newwidth = 1
+                    self.draw_zone.itemconfigure(x, width=newwidth)
+
                 if self.draw_zone.type(x) == "text":
                     size = self.initialSizes[x] * self.regZoom
                     newsize = round((size*1.1))
@@ -390,6 +521,12 @@ class Paint(object):
         elif (event.delta < 0):
             self.draw_zone.scale("all", truex, truey, 0.9, 0.9)
             for x in self.stack:
+                if self.draw_zone.type(x) == "rectangle":
+                    size = self.initialSizes[x] * self.regZoom
+                    newwidth = round((size*0.9))
+                    if newwidth < 1:
+                        newwidth = 1
+                    self.draw_zone.itemconfigure(x, width=newwidth)
                 if self.draw_zone.type(x) == "text":
                     size = self.initialSizes[x] * self.regZoom
                     newsize = round((size*0.9))
