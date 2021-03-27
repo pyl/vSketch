@@ -1,13 +1,13 @@
-from tkinter import *
 import math
+from tkinter import *
 class Paint(object):
+
+
 
     DEFAULT_PEN_SIZE = 5.0
     DEFAULT_COLOR = 'white'
     SCREEN_W=1600
     SCREEN_H=1600
-
-
 
     def __init__(self):
         self.master = Tk()
