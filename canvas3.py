@@ -10,6 +10,7 @@ class Paint(object):
     SCREEN_H=1600
 
     def __init__(self):
+        #linux test
         self.master = Tk()
 
         #self.line_button = Button(self.master, text='Line',command=self.set_tool_line)
@@ -41,7 +42,6 @@ class Paint(object):
         self.menubar.add_cascade(label="Fichier", menu=self.menu1)
         self.menu2 = Menu(self.menubar, tearoff=0)
         self.menu2.add_command(label="Undo", command=self.undo )
-
         self.menu2.add_command(label="Redo")
         self.menubar.add_cascade(label="Editer", menu=self.menu2)
 
@@ -115,8 +115,8 @@ class Paint(object):
             self.master.title("Rectangle Mode")
         if mode == 'grid':
             self.master.title("Grid Mode")
-        if mode == 'color':
-            pass
+        if mode == 'display':
+            self.master.title("Display Mode")
 
     def line_start(self,event):
         truex = self.draw_zone.canvasx(event.x)
@@ -135,7 +135,6 @@ class Paint(object):
         self.draw_zone.coords(x, curx, cury, truex, truey)
     def line_end(self,event):
         pass
-
 
     def circle_start(self,event):
         truex = self.draw_zone.canvasx(event.x)
@@ -156,7 +155,6 @@ class Paint(object):
         truey = self.draw_zone.canvasy(event.y)
         x = self.draw_zone.create_line(truex,truey,truex+1,truey+1)
         self.Point_objects.append(x)
-
 #create line from this place to previous place
 
     def freehand_start(self, event):
@@ -165,14 +163,15 @@ class Paint(object):
         self.px = truex
         self.py = truey
         self.stack.append("start")
+
     def freehand_motion(self, event):
         truex = self.draw_zone.canvasx(event.x)
         truey = self.draw_zone.canvasy(event.y)
-        x = self.draw_zone.create_line(self.px, self.py, truex, truey, fill=self.DEFAULT_COLOR, )
+        x = self.draw_zone.create_line(self.px, self.py, truex, truey, fill=self.DEFAULT_COLOR, width = 3)
         self.px = truex
         self.py = truey
         self.stack.append(x)
-        self.initialSizes[x] = 1
+        self.initialSizes[x] = 3
     def freehand_end(self, event):
         self.stack.append("end")
 
@@ -185,7 +184,7 @@ class Paint(object):
         if width < 1:
             width = 1
         x = self.draw_zone.create_rectangle(truex,truey,truex + 1,truey + 1, width =
-                                       round(width), fill = '', outline = 'white')
+                                       round(width), fill = '', outline = self.DEFAULT_COLOR)
         self.stack.append(x)
         self.initialSizes[x] = 5
 
@@ -238,7 +237,7 @@ class Paint(object):
                 if width < 1:
                     width = 1
                 x = self.draw_zone.create_rectangle(truex,truey,truex + 1,truey + 1, width =
-                                                   round(width), fill = '', outline = 'white')
+                                                   round(width), fill = '', outline = self.DEFAULT_COLOR)
                 arr.append(x)
                 self.stack.append(x)
                 self.initialSizes[x] = 5
@@ -265,8 +264,6 @@ class Paint(object):
     def grid_end(self, event):
         self.gridArray = []
 
-
-
     def text_start(self, event):
         truex = self.draw_zone.canvasx(event.x)
         truey = self.draw_zone.canvasy(event.y)
@@ -279,9 +276,12 @@ class Paint(object):
         self.draw_zone.delete('temp_text_objects')
         fontsize = math.floor(0.8*(truey-self.text_start_y))
         if self.text_start_y > truey:
-            self.draw_zone.create_text(self.text_start_x, truey, text = "\\\\", font = ("Purisa",round(fontsize)), tags = 'temp_text_objects', anchor = NW, fill = "white")
+            self.draw_zone.create_text(self.text_start_x, truey, text = "\\\\", font = ("Purisa",round(fontsize)), tags
+                                       = 'temp_text_objects', anchor = NW, fill = self.DEFAULT_COLOR)
         elif self.text_start_y < truey:
-            self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "\\\\", font = ("Purisa",round(fontsize)), tags = 'temp_text_objects', anchor = NW, fill = "white")
+            self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "\\\\", font =
+                                       ("Purisa",round(fontsize)), tags = 'temp_text_objects', anchor = NW, fill =
+                                       self.DEFAULT_COLOR)
     def text_end(self, event):
         truex = self.draw_zone.canvasx(event.x)
         truey = self.draw_zone.canvasy(event.y)
@@ -289,9 +289,10 @@ class Paint(object):
         fontsize = math.floor(0.8*(truey-self.text_start_y))
         if self.text_start_y < truey:
             d = self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "\\\\", font =
-                                       ("Purisa",round(fontsize)), anchor = NW, fill = "white")
+                                       ("Purisa",round(fontsize)), anchor = NW, fill = self.DEFAULT_COLOR)
         if self.text_start_y > truey:
-            d = self.draw_zone.create_text(self.text_start_x, truey, text = "\\\\", font = ("Purisa",round(fontsize)), tags = 'temp_text_objects', anchor = NW, fill = "white")
+            d = self.draw_zone.create_text(self.text_start_x, truey, text = "\\\\", font = ("Purisa",round(fontsize)),
+                                           tags = 'temp_text_objects', anchor = NW, fill = self.DEFAULT_COLOR)
         self.stack.append(d)
         self.initialSizes[d] = fontsize/self.regZoom
         self.setMode('textedit')
@@ -314,13 +315,27 @@ class Paint(object):
                 fhs = i
             if x == 'end':
                 inFreehand = False
+            if self.draw_zone.type(x) == 'rectangle':
+                x1 = self.draw_zone.coords(x)[0]
+                x2 = self.draw_zone.coords(x)[2]
+                y1 = self.draw_zone.coords(x)[1]
+                y2 = self.draw_zone.coords(x)[3]
+                deldist = 5
+                if (truex > min(x1, x2) and truex < max(x1,x2) and
+                        truey > min(y1, y2) and truey < max(y1, y2)):
+                    if inFreehand:
+                        while self.stack[fhs] != 'end':
+                            self.draw_zone.delete(self.stack[fhs])
+                            self.stack.pop(fhs)
+                    else:
+                        self.stack.remove(x)
+                        self.draw_zone.delete(x)
             if self.draw_zone.type(x) == 'line':
                 x1 = self.draw_zone.coords(x)[0]
                 x2 = self.draw_zone.coords(x)[2]
                 y1 = self.draw_zone.coords(x)[1]
                 y2 = self.draw_zone.coords(x)[3]
-                distx = abs(x1-x2)
-                disty = abs(y1-y2)
+
                 #5*self.regZoom is consistent to viewport
                 deldist = 5
                 if ((abs(x1-truex) < deldist and abs(y1 - truey) < deldist) or
@@ -332,15 +347,14 @@ class Paint(object):
                     else:
                         self.stack.remove(x)
                         self.draw_zone.delete(x)
-
     def change_text(self, event):
+        c = event.char
         if event.keycode == 19:
             return
-        c = event.char
+        #backspace
         if c == '\x1b':
             if self.mode == 'grid':
                 self.gridString = ""
-
             if len(self.stack) > 0:
                 top = self.stack[-1]
                 if self.mode == 'textedit':
@@ -350,6 +364,20 @@ class Paint(object):
                     self.draw_zone.itemconfigure(top, text=oldText)
             self.setMode('')
             return
+        if self.mode == 'display':
+            if c == 'a':
+                self.DEFAULT_COLOR = 'white'
+                return
+            if c == 'o':
+                self.DEFAULT_COLOR = 'red'
+                return
+            if c == 'e':
+                self.DEFAULT_COLOR = 'green'
+                return
+            if c == 'u':
+                self.DEFAULT_COLOR = 'blue'
+                return
+
         if self.mode == 'textedit':
             top = self.stack[-1]
             oldText = self.draw_zone.itemcget(top, 'text')
@@ -383,16 +411,24 @@ class Paint(object):
         if self.mode == '':
             if c == 'u':
                 self.undo()
+                return
             if c == 'a':
                 self.setMode('text')
+                return
             if c == 'o':
                 self.setMode('freehand')
+                return
             if c == 'e':
                 self.setMode('line')
+                return
             if c == ';':
                 self.setMode('delete')
+                return
             if c == '\'':
                 self.setMode('grid')
+                return
+            if c == ',':
+                self.setMode('display')
                 return
         if self.mode == 'grid':
             if c == 'u':
@@ -404,6 +440,9 @@ class Paint(object):
             if c == 'u':
                 self.undo()
         if self.mode == 'rect':
+            if c == 'u':
+                self.undo()
+        if self.mode == 'display':
             if c == 'u':
                 self.undo()
         if self.mode == 'grid':
@@ -465,7 +504,6 @@ class Paint(object):
             self.rect_motion(event)
         elif self.mode == 'grid':
             self.grid_motion(event)
-
 
     def draw_end(self,event):
         if self.mode =='line':

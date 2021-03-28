@@ -10,19 +10,24 @@ o - freehand mode,
 e - line mode,
 
 ' - grid mode,
+    To use grid mode, type i'j to plan a grid with i rows and j columns. 
 
 u - undo,
 
 ; - delete mode,
 
+, - display mode.
+    a - white
+    o - red
+    e - green
+    u - blue
+
 esc - normal mode,
 
 scroll - zoom in or out
 
-To use grid mode, type i'j to plan a grid with i rows and j columns. 
 
 - undo in any mode except text edit
 - delete at the base of text and at the endpoints of lines
-- cannot delete grids yet
 
 ![Example 1](https://i.imgur.com/J2g406w.png)
