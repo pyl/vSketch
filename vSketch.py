@@ -1,8 +1,9 @@
 import math
 from tkinter import *
+import tkinter.font as tkFont
+fontt = ""
+
 class Paint(object):
-
-
 
     DEFAULT_PEN_SIZE = 5.0
     DEFAULT_COLOR = 'white'
@@ -33,17 +34,6 @@ class Paint(object):
         self.draw_zone.pack(expand = True, fill = BOTH, anchor = E)
         self.scrollbarX = Scrollbar(self.master, orient = "horizontal")
         self.scrollbarX.pack(fill = BOTH)
-        self.menubar = Menu(self.master)
-        self.menu1 = Menu(self.menubar, tearoff=0)
-        self.menu1.add_command(label="Nouveau")
-        self.menu1.add_command(label="Ouvrir")
-        self.menu1.add_separator()
-        self.menu1.add_command(label="Quitter", command=self.master.destroy)
-        self.menubar.add_cascade(label="Fichier", menu=self.menu1)
-        self.menu2 = Menu(self.menubar, tearoff=0)
-        self.menu2.add_command(label="Undo", command=self.undo )
-        self.menu2.add_command(label="Redo")
-        self.menubar.add_cascade(label="Editer", menu=self.menu2)
 
         #scrollbar
         self.draw_zone.configure(xscrollcommand = self.scrollbarX.set,
@@ -51,7 +41,6 @@ class Paint(object):
                                  scrollregion = (0, 0, 10000, 5000))
         self.scrollbarX.configure(command = self.draw_zone.xview)
         self.scrollbarY.configure(command = self.draw_zone.yview)
-        self.master.config(menu=self.menubar)
         self.master.title('Normal Mode')
         self.setup()
         self.master.mainloop()
@@ -86,12 +75,14 @@ class Paint(object):
         self.py = 0
         self.draw_zone.focus_set()
         self.recentText = None
+        self.draw_zone.configure(scrollregion = self.draw_zone.bbox("all"))
         self.draw_zone.bind('<Button-1>', self.draw_start)
         self.draw_zone.bind('<B1-Motion>',self.draw_motion)
         self.draw_zone.bind('<ButtonRelease-1>',self.draw_end)
         self.draw_zone.bind("<Key>", self.change_text)
         self.draw_zone.bind("<MouseWheel>", self.zoomer)
         self.mode = ''
+        fontt =  tkFont.Font(family='gothic')
 
 
         #Text stuff
@@ -276,11 +267,11 @@ class Paint(object):
         self.draw_zone.delete('temp_text_objects')
         fontsize = math.floor(0.8*(truey-self.text_start_y))
         if self.text_start_y > truey:
-            self.draw_zone.create_text(self.text_start_x, truey, text = "\\\\", font = ("Purisa",round(fontsize)), tags
+            self.draw_zone.create_text(self.text_start_x, truey, text = "\\\\", font = (fontt,round(fontsize)), tags
                                        = 'temp_text_objects', anchor = NW, fill = self.DEFAULT_COLOR)
         elif self.text_start_y < truey:
             self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "\\\\", font =
-                                       ("Purisa",round(fontsize)), tags = 'temp_text_objects', anchor = NW, fill =
+                                       (fontt,round(fontsize)), tags = 'temp_text_objects', anchor = NW, fill =
                                        self.DEFAULT_COLOR)
     def text_end(self, event):
         truex = self.draw_zone.canvasx(event.x)
@@ -289,9 +280,9 @@ class Paint(object):
         fontsize = math.floor(0.8*(truey-self.text_start_y))
         if self.text_start_y < truey:
             d = self.draw_zone.create_text(self.text_start_x, self.text_start_y, text = "\\\\", font =
-                                       ("Purisa",round(fontsize)), anchor = NW, fill = self.DEFAULT_COLOR)
+                                       (fontt,round(fontsize)), anchor = NW, fill = self.DEFAULT_COLOR)
         if self.text_start_y > truey:
-            d = self.draw_zone.create_text(self.text_start_x, truey, text = "\\\\", font = ("Purisa",round(fontsize)),
+            d = self.draw_zone.create_text(self.text_start_x, truey, text = "\\\\", font = (fontt,round(fontsize)),
                                            tags = 'temp_text_objects', anchor = NW, fill = self.DEFAULT_COLOR)
         self.stack.append(d)
         self.initialSizes[d] = fontsize/self.regZoom
@@ -349,8 +340,8 @@ class Paint(object):
                         self.draw_zone.delete(x)
     def change_text(self, event):
         c = event.char
-        if event.keycode == 19:
-            return
+        # if event.keycode == 19:
+            # return
         #backspace
         if c == '\x1b':
             if self.mode == 'grid':
@@ -409,6 +400,14 @@ class Paint(object):
                     self.setMode('')
                 self.draw_zone.itemconfigure(top, text=newText)
         if self.mode == '':
+            if c == 'h':
+                self.draw_zone.xview_scroll(-1, "units")
+            if c == 'j':
+                self.draw_zone.yview_scroll(1, "units")
+            if c == 'k':
+                self.draw_zone.yview_scroll(-1, "units")
+            if c == 'l':
+                self.draw_zone.xview_scroll(1, "units")
             if c == 'u':
                 self.undo()
                 return
@@ -549,7 +548,7 @@ class Paint(object):
                     #newX = self.draw_zone.itemconfigure(x, )
                     if newsize < 2:
                         newsize = 2
-                    self.draw_zone.itemconfigure(x, font = ("Purisa", newsize))
+                    self.draw_zone.itemconfigure(x, font = (fontt, newsize))
                 if self.draw_zone.type(x) == "line":
                     width = self.initialSizes[x] * self.regZoom
                     newwidth = round((width*1.1))
@@ -570,7 +569,7 @@ class Paint(object):
                     newsize = round((size*0.9))
                     if newsize < 2:
                         newsize = 2
-                    self.draw_zone.itemconfigure(x, font = ("Purisa", newsize))
+                    self.draw_zone.itemconfigure(x, font = (fontt, newsize))
                 if self.draw_zone.type(x) == "line":
                     width = self.initialSizes[x] * self.regZoom
                     newwidth = round((width*0.9))
